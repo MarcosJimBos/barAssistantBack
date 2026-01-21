@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    
+    <xs:element name="notes" type="notesType"/>
+    
+    <xs:complexType name="notesType">
+        <xs:sequence>
+            <xs:element name="note" type="noteContainerType" maxOccurs="unbounded" minOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="noteContainerType">
+        <xs:sequence>
+            <xs:element name="to" type="xs:string"/>
+            <xs:element name="from" type="xs:string"/>
+            <xs:element name="heading" type="xs:string"/>
+            
+            <xs:element name="body" type="bodyType"/> 
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="bodyType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="length" type="xs:integer" use="optional"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+</xs:schema>

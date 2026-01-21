@@ -1,0 +1,30 @@
+{
+   "name": "barassistantback",
+   "version": "0.0.1",
+   "description": "Awesome project developed with TypeORM.",
+   "type": "commonjs",
+   "devDependencies": {
+      "@types/node": "^22.13.10",
+      "concurrently": "^9.2.1",
+      "copyfiles": "^2.4.1",
+      "ts-node": "^10.9.2",
+      "typescript": "^5.8.2"
+   },
+   "dependencies": {
+      "@neondatabase/serverless": "^1.0.2",
+      "@types/socket.io": "^3.0.1",
+      "body-parser": "^1.20.3",
+      "express": "^4.21.2",
+      "pg": "^8.14.1",
+      "reflect-metadata": "^0.2.2",
+      "socket.io": "^4.8.3",
+      "typeorm": "0.3.27"
+   },
+   "scripts": {
+      "start": "ts-node src/index.ts",
+      "typeorm": "typeorm-ts-node-commonjs",
+      "watch-entities": "onchange \"src/entity/*.ts\" -- npm run copy-entities",
+      "copy-entities": "copyfiles -u 2 ./src/entity/* ../barAssistantBack/src/entity",
+      "dev": "concurrently \"npm run start\" \"npm run watch-entities\""
+   }
+}
