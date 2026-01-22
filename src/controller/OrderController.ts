@@ -1,98 +1,63 @@
-import { AppDataSource } from "../data-source";
-import { Order } from "../entity/Order";
-import { Table } from "../entity/Table";
+import { Request, Response } from "express";
+import { OrderService } from "../service/OrderService";
 
-export class OrderService {
+export class OrderController {
 
-    private orderRepository = AppDataSource.getRepository(Order);
-    private tableRepository = AppDataSource.getRepository(Table);
+    private orderService = new OrderService();
 
-
-    // GetOrder
-    async GetOrder(id: number): Promise<Order | null> {
-        return await this.orderRepository.findOne({
-            where: { id },
-            relations: {
-                table: true,
-                orderLines: {
-                    product: true
-                }
-            }
-        });
+    async all(req: Request, res: Response) {
+        try {
+            const orders = await this.orderService.GetOrders();
+            res.status(200).json({
+                message: "Orders retrieved successfully",
+                object: orders
+            });
+        } catch (error) {
+            res.status(500).json({ message: "Error retrieving orders", error });
+        }
     }
 
-    // GetOrders
-    async GetOrders(): Promise<Order[]> {
-        return await this.orderRepository.find({
-            relations: {
-                table: true
-            }
-        });
-    }
+    async one(req: Request, res: Response) {
+        const id = parseInt(req.params.id);
 
-    // SaveOrder (crear o actualizar)
-    async SaveOrder(order: Order): Promise<Order> {
-        return await this.orderRepository.save(order);
-    }
-
-    // DeleteOrder
-    async DeleteOrder(id: number): Promise<boolean> {
-        const order = await this.GetOrder(id);
-
+        const order = await this.orderService.GetOrder(id);
         if (!order) {
-            return false;
+            return res.status(404).json({ message: "Order not found", object: null });
         }
 
-        await this.orderRepository.remove(order);
-        return true;
+        res.status(200).json({ message: "Order retrieved", object: order });
     }
 
-
-    // Obtener comanda activa de una mesa
-    async GetActiveOrderByTable(tableId: number): Promise<Order | null> {
-        return await this.orderRepository.findOne({
-            where: {
-                table: { id: tableId },
-                status: "Opened"
-            },
-            relations: {
-                table: true,
-                orderLines: {
-                    product: true
-                }
-            }
-        });
+    async save(req: Request, res: Response) {
+        try {
+            const order = await this.orderService.SaveOrder(req.body);
+            res.status(200).json({
+                message: "Order saved successfully",
+                object: order
+            });
+        } catch (error) {
+            res.status(500).json({ message: "Error saving order", error });
+        }
     }
 
-    // Abrir comanda para una mesa
-    async OpenOrderForTable(tableId: number): Promise<Order | null> {
+    async remove(req: Request, res: Response) {
+        const id = parseInt(req.params.id);
 
-        const table = await this.tableRepository.findOne({
-            where: { id: tableId }
+        const deleted = await this.orderService.DeleteOrder(id);
+        if (!deleted) {
+            return res.status(404).json({ message: "Order not found", object: null });
+        }
+
+        res.status(200).json({ message: "Order deleted successfully" });
+    }
+
+    async getActiveOrderByTable(req: Request, res: Response) {
+        const tableId = parseInt(req.params.tableId);
+
+        const order = await this.orderService.GetActiveOrderByTable(tableId);
+        res.status(200).json({
+            message: "Active order retrieved",
+            object: order
         });
-
-        if (!table) {
-            return null;
-        }
-
-        // ¿Ya existe comanda abierta?
-        const existingOrder = await this.GetActiveOrderByTable(tableId);
-        if (existingOrder) {
-            return existingOrder;
-        }
-
-        const newOrder = new Order();
-        newOrder.date = new Date();
-        newOrder.status = "Opened";
-        newOrder.totalPrice = 0;
-        newOrder.table = table;
-        newOrder.orderLines = [];
-
-        table.status = "Occupied";
-
-        await this.tableRepository.save(table);
-        await this.orderRepository.save(newOrder);
-
-        return newOrder;
     }
 }

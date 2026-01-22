@@ -15,6 +15,13 @@ export const tableRoutes = [
     route: API + "/tables/:tableId/open-order",
     controller: TableController,
     action: "openOrder"
+    },
+    
+    {
+    method: "get",
+    route: API + "/tables",
+    controller: TableController,
+    action: "all"
     }
 
 ];
