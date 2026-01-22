@@ -1,98 +1,60 @@
-import { AppDataSource } from "../data-source";
 import { Request, Response } from "express";
-import { Order } from "../entity/Order";
-import { Table } from "../entity/Table";
+import { TableService } from "../service/TableService";
+import { OrderService } from "../service/OrderService";
 
 export class TableController {
 
-    private orderRepository = AppDataSource.getRepository(Order);
-    private tableRepository = AppDataSource.getRepository(Table);
+    private tableService = new TableService();
+    private orderService = new OrderService();
 
-    // 1️⃣ GET comanda activa
+    // =====================
+    // GET comanda activa
+    // =====================
     async getActiveOrder(req: Request, res: Response) {
         const tableId = parseInt(req.params.tableId);
 
         try {
-            const activeOrder = await this.orderRepository.findOne({
-                where: {
-                    table: { id: tableId },
-                    status: "Opened"
-                },
-                relations: {
-                    table: true,
-                    orderLines: {
-                        product: true
-                    }
-                }
-            });
+            const activeOrder = await this.orderService.GetActiveOrderByTable(tableId);
 
             return res.status(200).json({
                 message: activeOrder
-                    ? "Active order retrieved"
-                    : "No active order for this table",
-                object: activeOrder ?? null
+                    ? "Comanda activa recuperada"
+                    : "No hi ha comanda activa per aquesta taula",
+                object: activeOrder
             });
 
         } catch (error) {
             return res.status(500).json({
-                message: "Error retrieving active order",
+                message: "Error amb la comanda activa",
                 error
             });
         }
     }
 
-    // 2️⃣ POST abrir comanda
+    // =====================
+    // POST abrir comanda
+    // =====================
     async openOrder(req: Request, res: Response) {
         const tableId = parseInt(req.params.tableId);
 
         try {
-            const table = await this.tableRepository.findOne({
-                where: { id: tableId }
-            });
+            const order = await this.orderService.OpenOrderForTable(tableId);
 
-            if (!table) {
+            if (!order) {
                 return res.status(404).json({
-                    message: "Table not found",
+                    message: "Taula no trobada o ja té una comanda activa",
                     object: null
                 });
             }
 
-            const existingOrder = await this.orderRepository.findOne({
-                where: {
-                    table: { id: tableId },
-                    status: "Opened"
-                },
-                relations: {
-                    orderLines: true
-                }
-            });
-
-            if (existingOrder) {
-                return res.status(200).json({
-                    message: "Active order already exists",
-                    object: existingOrder
-                });
-            }
-
-            const newOrder = new Order();
-            newOrder.date = new Date();
-            newOrder.status = "Opened";
-            newOrder.totalPrice = 0;
-            newOrder.table = table;
-            newOrder.orderLines = [];
-
-            table.status = "Occupied";
-            await this.tableRepository.save(table);
-            await this.orderRepository.save(newOrder);
-
             return res.status(201).json({
-                message: "Order opened successfully",
-                object: newOrder
+                message: "Comanda oberta correctament",
+                object: order
             });
 
         } catch (error) {
             return res.status(500).json({
-                message: "Error opening order",
+                message: "Error obrint la comanda",
                 error
             });
         }

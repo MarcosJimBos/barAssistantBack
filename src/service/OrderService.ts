@@ -25,7 +25,10 @@ export class OrderService {
     async GetOrders(): Promise<Order[]> {
         return await this.orderRepository.find({
             relations: {
-                table: true
+                table: true,
+                orderLines: {
+                    product: true
+                }
             }
         });
     }
