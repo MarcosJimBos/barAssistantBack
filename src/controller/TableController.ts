@@ -8,6 +8,60 @@ export class TableController {
     private orderService = new OrderService();
 
     // =====================
+    // GET todas las mesas
+    // =====================
+    async all(req: Request, res: Response) {
+        try {
+            const tables = await this.tableService.GetTables();
+
+            return res.status(200).json({
+                message: "Taules recuperades correctament",
+                object: tables
+            });
+        } catch (error) {
+            return res.status(500).json({
+                message: "Error recuperant les taules",
+                error
+            });
+        }
+    }
+
+    // =====================
+    // GET una mesa por ID
+    // =====================
+    async one(req: Request, res: Response) {
+        const id = parseInt(req.params.id);
+
+        if (isNaN(id)) {
+            return res.status(400).json({
+                message: "Id de taula invàlid",
+                object: null
+            });
+        }
+
+        try {
+            const table = await this.tableService.GetTable(id);
+
+            if (!table) {
+                return res.status(404).json({
+                    message: "Taula no trobada",
+                    object: null
+                });
+            }
+
+            return res.status(200).json({
+                message: "Taula recuperada correctament",
+                object: table
+            });
+        } catch (error) {
+            return res.status(500).json({
+                message: "Error recuperant la taula",
+                error
+            });
+        }
+    }
+
+    // =====================
     // GET comanda activa
     // =====================
     async getActiveOrder(req: Request, res: Response) {
