@@ -116,4 +116,68 @@ export class OrderLineService {
 
         return saved;
     }
+
+    // =========================
+// OrderLines por estado y sala
+// =========================
+async GetOrderLinesByStatusAndRoom(
+    status: string,
+    room: string
+): Promise<OrderLine[]> {
+
+    const orderLines = await this.orderLineRepository.find({
+        where: {
+            status: status as any,
+            product: {
+                elaborationSequences: {
+                    section: {
+                        name: room
+                    }
+                }
+            }
+        },
+        relations: {
+            product: {
+                elaborationSequences: {
+                    section: true
+                }
+            }
+        }
+    });
+
+    // Filtrado por secuencia actual (igual que tenías antes)
+    return orderLines.filter(ol =>
+        ol.currentSectionSequence ===
+        ol.product.elaborationSequences[ol.currentSectionSequence]?.sectionOrder
+    );
+}
+
+// =========================
+// OrderLines por NO estado y sala
+// =========================
+async GetOrderLinesByNoStatusAndRoom(
+    status: string,
+    room: string
+): Promise<OrderLine[]> {
+
+    return await this.orderLineRepository
+        .createQueryBuilder('orderLine')
+
+        // Relaciones que queremos devolver
+        .leftJoinAndSelect('orderLine.product', 'product')
+        .leftJoinAndSelect('product.elaborationSequences', 'allSequences')
+        .leftJoinAndSelect('allSequences.section', 'allSections')
+
+        // Filtro de estado
+        .where('orderLine.status != :status', { status })
+
+        // Join extra SOLO para filtrar por sala
+        .innerJoin('product.elaborationSequences', 'searchSequence')
+        .innerJoin('searchSequence.section', 'searchSection')
+        .andWhere('searchSection.name = :room', { room })
+
+        .getMany();
+}
+
+
 }
